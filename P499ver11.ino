@@ -66,10 +66,11 @@ void loop() {
   // if ten seconds have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
-    //httpRequest();
+    //httpRequest(); //here we request shit from the web page
     lastConnectionTime = millis();
     Serial.print("Sensor Value: ");
     Serial.println(An_Sensor_read());
+    I2C_sensor_read();
   }
   
   //printDate();
@@ -269,6 +270,7 @@ void I2C_sensor_setup(){
   Serial.println();
 }
 
+//this function needs to return values. Probably a string or we could pass it a pointer to edit
 void I2C_sensor_read(){
   Serial.print("Soil Moisture Capacitance: ");
   Serial.print(Sensor_i2c_1.getCapacitance()); //read capacitance register
