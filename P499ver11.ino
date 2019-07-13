@@ -1,8 +1,9 @@
+
 #include <SPI.h>
 #include <WiFiNINA.h>
 #include <WiFiUdp.h>
 #include <RTCZero.h>
-//#include <I2CSoilMoistureSensor.h>
+#include <I2CSoilMoistureSensor.h>
 #include <Wire.h>
 
 RTCZero rtc;
@@ -34,18 +35,22 @@ const int An_S1_In = A0;
 
 const int SENSOR_DELAY = 10; // in milliseconds
 
-//I2CSoilMoistureSensor sensor;
+I2CSoilMoistureSensor Sensor_i2c_1;
 
 void setup() {
   // put your setup code here, to run once:
   int Time_Stamp[4];
+  Serial.begin(9600);
   wifi_connect();
   //Clock
   rtc.begin();
   rtc.setEpoch(get_epoch(10));
   set_rtc();//set the correct time
-  pinMode(7,OUTPUT);
-  digitalWrite(7, HIGH);
+
+  //pin for analog sensor may be moved to an external function later
+  pinMode(An_S1_In, INPUT);
+  //set up i2c sensor
+  I2C_sensor_setup();
 
 }
 
@@ -235,16 +240,7 @@ void httpRequest() {
   }
 }
 
-void analog_sesor_setup(){
-  pinMode(An_S1_In, INPUT);
- // pinMode(An_S1_Power, OUTPUT);
 
-  // Start with sensor OFF
-  //digitalWrite(An_S1_Power, LOW);
-
-  // Setup timer.
-  //counter = RESET;  
-}
 
 int An_Sensor_read(){
    // Turn sensor ON and wait a moment.
@@ -258,4 +254,29 @@ int An_Sensor_read(){
     //digitalWrite(An_S1_Power, LOW);
     return value; 
 }
+
+void I2C_sensor_setup(){
+    //Sensor Code
+  
+  Wire.begin();
+  // reset sensor
+  Sensor_i2c_1.begin();
+  delay(1000); // give some time to boot up
+  Serial.print("I2C Soil Moisture Sensor Address: ");
+  Serial.println(Sensor_i2c_1.getAddress(),HEX);
+  Serial.print("Sensor Firmware version: ");
+  Serial.println(Sensor_i2c_1.getVersion(),HEX);
+  Serial.println();
+}
+
+void I2C_sensor_read(){
+  Serial.print("Soil Moisture Capacitance: ");
+  Serial.print(Sensor_i2c_1.getCapacitance()); //read capacitance register
+  Serial.print(", Temperature: ");
+  Serial.print(Sensor_i2c_1.getTemperature()/(float)10); //temperature register
+  Serial.print(", Light: ");
+  Serial.println(Sensor_i2c_1.getLight(true)); //request light measurement, wait and read light register
+  Sensor_i2c_1.sleep(); // available since FW 2.3 
+}
+
 
