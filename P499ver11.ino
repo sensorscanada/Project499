@@ -5,6 +5,7 @@
 #include <RTCZero.h>
 #include <I2CSoilMoistureSensor.h>
 #include <Wire.h>
+#include <ThingSpeak.h>
 
 RTCZero rtc;
 
@@ -18,7 +19,8 @@ int status = WL_IDLE_STATUS;
 WiFiClient client;
 
 // server address:
-char server[] = "sensorscanada.ca";
+//char server[] = "sensorscanada.ca";
+char server[] = "https://api.thingspeak.com";
 //IPAddress server(64,131,82,241);
 #define PORT 80 //port we comunicate on
 
@@ -36,6 +38,11 @@ const int An_S1_In = A0;
 const int SENSOR_DELAY = 10; // in milliseconds
 
 I2CSoilMoistureSensor Sensor_i2c_1;
+
+// ThingSpeak information
+char* writeAPIKey = "ZFDRBL1QJVBYYO2G";
+char* readAPIKey = "9ZNNL6X3JJH1M1LV"; 
+const long channelID = 824844;
 
 void setup() {
   // put your setup code here, to run once:
@@ -71,6 +78,9 @@ void loop() {
     Serial.print("Sensor Value: ");
     Serial.println(An_Sensor_read());
     I2C_sensor_read();
+    //writeTSData
+    ThingSpeak.begin(client);
+    int  writeSuccess = ThingSpeak.writeField(channelID, 1, 2, writeAPIKey);
   }
   
   //printDate();
@@ -227,11 +237,11 @@ void httpRequest() {
   if (client.connect(server, PORT)) {
     Serial.println("connecting...");
     // send the HTTP PUT request:
-    client.println("GET /index.html HTTP/1.1");
-    client.println("Host: sensorscanada.ca");
-    client.println("User-Agent: ArduinoWiFi/1.1");
-    client.println("Connection: close");
-    client.println();
+    client.println("GET /update?api_key=ZFDRBL1QJVBYYO2G&field1=2");
+    //client.println("Host: sensorscanada.ca");
+    //client.println("User-Agent: ArduinoWiFi/1.1");
+    //client.println("Connection: close");
+    //client.println();
 
     // note the time that the connection was made:
     lastConnectionTime = millis();
@@ -280,5 +290,15 @@ void I2C_sensor_read(){
   Serial.println(Sensor_i2c_1.getLight(true)); //request light measurement, wait and read light register
   Sensor_i2c_1.sleep(); // available since FW 2.3 
 }
+
+/*
+client.print("GET /channels/421932/feeds.json?api_key=");
+client.print(apiKey);
+client.println("&results=2 HTTP/1.1");
+client.print("Host:");
+client.println(host);
+client.println(); // empty line
+
+*/
 
 
