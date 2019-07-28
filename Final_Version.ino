@@ -108,8 +108,14 @@ void loop() {
       count=0;
       I2C_sensor_read();
       //ThingSpeak.begin(client);
-      ThingSpeak.setField(6,result_Analog);
-      ThingSpeak.setField(5,result_Analog);
+
+
+
+      ThingSpeak.setField(1,result_Analog);
+      ThingSpeak.setField(2,I2C_Temp);
+      ThingSpeak.setField(3,I2C_Light);
+      ThingSpeak.setField(4,result_I2C);
+      
 
       int writeSucess = ThingSpeak.writeFields(channelID, writeAPIKey);
       
