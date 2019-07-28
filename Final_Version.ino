@@ -47,6 +47,8 @@ char* readAPIKey = Thing_Read_Key;
 const long channelID = 824844;
 
 const int Array_Size = 10;
+const float xVar = -.00234156;
+const float b = 3.176;
 
 void setup() {
   // put your setup code here, to run once:
@@ -54,11 +56,11 @@ void setup() {
   Serial.begin(9600);
   wifi_connect();
   //Clock
-
   //pin for analog sensor may be moved to an external function later
   pinMode(An_S1_In, INPUT);
   //set up i2c sensor
   I2C_sensor_setup();
+  ThingSpeak.begin(client);
 }
 
 void loop() {
@@ -70,6 +72,7 @@ void loop() {
   float sum_I2C_humidity = 0;
   float I2C_Temp;
   float I2C_Light;
+  Serial.println("Ver 1.1");
   while(1){
        // if there's incoming data from the net connection.
     // send it out the serial port.  This is for debugging
@@ -87,6 +90,8 @@ void loop() {
       sum_Analog=0;
       result_I2C= (float) sum_I2C_humidity/count;
       sum_I2C_humidity=0;
+
+      result_Analog=moisture_cal(result_Analog);
       
       //I2C sensor reads no averaging
       I2C_Temp = Sensor_i2c_1.getTemperature()/(float)10;
@@ -102,11 +107,17 @@ void loop() {
       Serial.println(count);
       count=0;
       I2C_sensor_read();
-      ThingSpeak.begin(client);
-      int  writeSuccess = ThingSpeak.writeField(channelID, 2,result_Analog, writeAPIKey);
-      writeSuccess = ThingSpeak.writeField(channelID, 1,result_I2C, writeAPIKey);
-      writeSuccess = ThingSpeak.writeField(channelID, 3,I2C_Temp, writeAPIKey);
-      writeSuccess = ThingSpeak.writeField(channelID, 4,I2C_Light, writeAPIKey);   
+      //ThingSpeak.begin(client);
+      ThingSpeak.setField(6,result_Analog);
+      ThingSpeak.setField(5,result_Analog);
+
+      int writeSucess = ThingSpeak.writeFields(channelID, writeAPIKey);
+      
+      //int  writeSuccess = ThingSpeak.writeField(channelID, 5,result_Analog, writeAPIKey);
+      //writeSuccess = ThingSpeak.writeField(channelID, 1,result_I2C, writeAPIKey);
+      //writeSuccess = ThingSpeak.writeField(channelID, 3,I2C_Temp, writeAPIKey);
+      //ThingSpeak.begin(client);
+      //writeSuccess = ThingSpeak.writeField(channelID, 4,result_Analog, writeAPIKey);  
     }
     //things we average
     //Analog
@@ -121,6 +132,22 @@ void loop() {
   }
  
 }
+
+float moisture_cal(float x){ //calibration so the output is roughly the ratio by weight
+  //                           of water to soil
+  if (x>=908){
+    return(x*(-0.00917)+9.4);
+  }
+  else if (x<=340){
+    return(x*(-0.0341706)+14.01);
+  }else if (x<=307){
+    
+    return(3.52);
+  }else{
+    return (x*(xVar)+b);
+  }
+  
+ }
 
 void wifi_connect(){
   if (WiFi.status() == WL_NO_SHIELD) {
